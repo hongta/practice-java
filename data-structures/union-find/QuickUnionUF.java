@@ -17,8 +17,8 @@ public class QuickUnionUF {
     }
 
     private void validate(int v) {
-        if ( v <= 0 || v >= id.length)
-            throw new IndexOutOfBoundsException("index: " + v + "out of bounds[0 - " + id.length + ").");
+        if ( v < 0 || v >= id.length)
+            throw new IndexOutOfBoundsException("index: " + v + " out of bounds[0 - " + id.length + ").");
 
     }
 
