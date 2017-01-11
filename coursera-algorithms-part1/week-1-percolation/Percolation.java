@@ -7,23 +7,32 @@ import edu.princeton.cs.algs4.StdOut;
 
 public class Percolation {
 
-    private WeightedQuickUnionUF wqu;
+    private WeightedQuickUnionUF wqu, auxWqu;
     private boolean[][] sitesOpened;
-    private boolean[] rowOpened;
-    private int grid;
+    private int size;
     private int numOfOpen;
+
+    private int virtualTopSite;
+    private int virtualBottomSite;
 
     public Percolation(int n) {
         if (n<=0)
             throw new java.lang.IllegalArgumentException("Illegal Argument N");
 
+        // first WeightedQuickUnionUF instance with virtual top site and virtual bottom site
         wqu = new WeightedQuickUnionUF(n * n + 2);
+
+        // second WeightedQuickUnionUF instance with only virtual top site
+        auxWqu = new WeightedQuickUnionUF(n * n+1);
+
         //use n*n as virtual top site
         //  n*n+1 as virtual bottom site
-        grid = n;
+        virtualTopSite = n*n;
+        virtualBottomSite = n*n+1;
+
+        size = n;
         numOfOpen = 0;
         sitesOpened = new boolean[n][n];
-        rowOpened = new boolean[n];
 
     }
 
@@ -36,47 +45,52 @@ public class Percolation {
         numOfOpen++;
         sitesOpened[row-1][col-1] = true;
 
-        //top sites
-        if (current < grid) {
-            wqu.union(current, grid*grid);
+        //union to virtual top site for both WeightedQuickUnion instances
+        if (current < size) {
+            wqu.union(current, virtualTopSite);
+            auxWqu.union(current, virtualTopSite);
         }
 
-//        //bottom sites
-//        if (current < grid * grid && current >= (grid-1)* grid ) {
-//            wqu.union(current, grid*grid+1);
-//        }
+        //union to virtual bottom site for first WeightedQuickUnion instance
+        if (current < size * size && current >= (size-1)* size ) {
+            wqu.union(current, virtualBottomSite);
+        }
 
         //row-1, col
         if (row-1 > 0 && isOpen(row-1, col)) {
-            wqu.union(current, current - grid);
+            wqu.union(current, current - size);
+            auxWqu.union(current, current - size);
         }
 
         //row, col+1
-        if (col+1 < grid+1 && isOpen(row, col+1)) {
+        if (col+1 < size+1 && isOpen(row, col+1)) {
             wqu.union(current, current + 1);
+            auxWqu.union(current, current + 1);
         }
 
         //row+1, col
-        if (row+1 < grid+1 && isOpen( row+1, col)) {
-            wqu.union(current, current + grid);
+        if (row+1 < size+1 && isOpen( row+1, col)) {
+            wqu.union(current, current + size);
+            auxWqu.union(current, current + size);
         }
 
         //row, col-1
         if (col-1 > 0 && isOpen(row, col-1)) {
             wqu.union(current, current - 1);
+            auxWqu.union(current, current - 1);
         }
 
     }
 
     public boolean isOpen(int row, int col) {
-        if (row < 1 || row >grid || col < 1 || col > grid)
+        if (row < 1 || row >size || col < 1 || col > size)
             throw new IndexOutOfBoundsException("out of range");
 
         return sitesOpened[row-1][col-1];
     }
 
     public boolean isFull(int row, int col) {
-        if (row < 1 || row > grid || col < 1 || col > grid)
+        if (row < 1 || row > size || col < 1 || col > size)
             throw new IndexOutOfBoundsException("out of range");
 
         if (!isOpen(row, col))
@@ -86,16 +100,17 @@ public class Percolation {
 
         int current = getIdFromRowCol(row, col);
 
-        return wqu.connected(current, grid*grid);
+        //use second WeighedQuickUnionUF instance to check site is full
+        return auxWqu.connected(current, virtualTopSite);
     }
 
     private int getIdFromRowCol(int row, int col)
     {
-        if (row < 1 || row >grid || col < 1 || col > grid) {
+        if (row < 1 || row >size || col < 1 || col > size) {
             throw new IndexOutOfBoundsException("out of range");
         }
 
-        return (row-1) * grid + col-1;
+        return (row-1) * size + col-1;
     }
 
 
@@ -105,21 +120,14 @@ public class Percolation {
 
     public boolean percolates() {
 
-        for (int i = 0; i < grid; i++) {
-            int n = getIdFromRowCol(grid,i+1);
-            if (wqu.connected(n, grid*grid))
-                return true;
-        }
-        return false;
+        //use first WeighedQuickUnionUF instance to check site percolates
+        return wqu.connected(size*size, size*size+1);
     }
 
     public static void main(String[] args) {
 
-        int grid = 10;
-        Percolation per = new Percolation(grid);
-        Percolation p = new Percolation(1);
-
-        StdOut.println(per.numberOfOpenSites());
+        int size = 10;
+        Percolation per = new Percolation(size);
 
         per.open(4, 8);
         per.open(4, 9);
@@ -138,9 +146,8 @@ public class Percolation {
         per.open(8, 10);
         per.open(9, 10);
         per.open(10, 10);
-        for (int row =0; row < grid; row++) {
-            for (int col = 0; col < grid; col++) {
-//                StdOut.print(id[row*per])
+        for (int row =0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
                 if (per.isOpen(row+1, col+1)) {
                     StdOut.print(1);
                 } else {
@@ -154,11 +161,6 @@ public class Percolation {
         StdOut.println(per.numberOfOpenSites());
         StdOut.println(per.isFull(10,10));
         StdOut.println(per.percolates());
-
-        p.open(1,1);
-        StdOut.println(p.isFull(1,1));
-        StdOut.println(p.numberOfOpenSites());
-        StdOut.println(p.percolates());
 
     }
 }
