@@ -41,10 +41,10 @@ public class Percolation {
             wqu.union(current, grid*grid);
         }
 
-        //bottom sites
-        if (current < grid * grid && current >= (grid-1)* grid ) {
-            wqu.union(current, grid*grid+1);
-        }
+//        //bottom sites
+//        if (current < grid * grid && current >= (grid-1)* grid ) {
+//            wqu.union(current, grid*grid+1);
+//        }
 
         //row-1, col
         if (row-1 > 0 && isOpen(row-1, col)) {
@@ -105,7 +105,12 @@ public class Percolation {
 
     public boolean percolates() {
 
-        return wqu.connected(grid*grid, grid*grid+1);
+        for (int i = 0; i < grid; i++) {
+            int n = getIdFromRowCol(grid,i+1);
+            if (wqu.connected(n, grid*grid))
+                return true;
+        }
+        return false;
     }
 
     public static void main(String[] args) {
