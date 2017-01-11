@@ -17,7 +17,9 @@ public class Percolation {
         if (n<=0)
             throw new java.lang.IllegalArgumentException("Illegal Argument N");
 
-        wqu = new WeightedQuickUnionUF(n * n);
+        wqu = new WeightedQuickUnionUF(n * n + 2);
+        //use n*n as virtual top site
+        //  n*n+1 as virtual bottom site
         grid = n;
         numOfOpen = 0;
         sitesOpened = new boolean[n][n];
@@ -33,7 +35,16 @@ public class Percolation {
 
         numOfOpen++;
         sitesOpened[row-1][col-1] = true;
-        rowOpened[row-1] = true;
+
+        //top sites
+        if (current < grid) {
+            wqu.union(current, grid*grid);
+        }
+
+        //bottom sites
+        if (current < grid * grid && current >= (grid-1)* grid ) {
+            wqu.union(current, grid*grid+1);
+        }
 
         //row-1, col
         if (row-1 > 0 && isOpen(row-1, col)) {
@@ -71,19 +82,11 @@ public class Percolation {
         if (!isOpen(row, col))
             return false;
 
-        for (int i = 0; i < row; i++) {
-            if (!rowOpened[i])
-                return false;
-        }
 
-        for(int i =0; i < grid; i++) {
-            if (isOpen(1, i+1)  && connected(1, i+1, row, col)) {
 
-                return true;
-            }
-        }
+        int current = getIdFromRowCol(row, col);
 
-        return false;
+        return wqu.connected(current, grid*grid);
     }
 
     private int getIdFromRowCol(int row, int col)
@@ -95,19 +98,6 @@ public class Percolation {
         return (row-1) * grid + col-1;
     }
 
-    private void union(int row_1, int col_1, int row_2, int col_2)
-    {
-        int pos_1 = (row_1 - 1) * grid + col_1 - 1;
-        int pos_2 = (row_2 - 1) * grid + col_2 - 1;
-        wqu.union(pos_1, pos_2);
-    }
-
-    private boolean connected(int row_1, int col_1, int row_2, int col_2)
-    {
-        int pos_1 = (row_1 - 1) * grid + col_1 - 1;
-        int pos_2 = (row_2 - 1) * grid + col_2 - 1;
-        return wqu.connected(pos_1, pos_2);
-    }
 
     public int numberOfOpenSites() {
         return numOfOpen;
@@ -115,13 +105,7 @@ public class Percolation {
 
     public boolean percolates() {
 
-        for (int i = 0; i < grid; i++) {
-            if (isOpen(grid, i+1)  && isFull(grid, i+1)) {
-                return true;
-            }
-
-        }
-        return false;
+        return wqu.connected(grid*grid, grid*grid+1);
     }
 
     public static void main(String[] args) {
@@ -163,7 +147,7 @@ public class Percolation {
         }
         StdOut.println(per.isFull(4,9));
         StdOut.println(per.numberOfOpenSites());
-        StdOut.println(per.isFull(10,9));
+        StdOut.println(per.isFull(10,10));
         StdOut.println(per.percolates());
 
         p.open(1,1);
